@@ -17,7 +17,13 @@ var GLOBAL_BORDER_TRACKERS: [BorderManager] = []
 @available(iOSApplicationExtension, unavailable)
 public class LCManager: NSObject, UIGestureRecognizerDelegate {
     
-    public static let shared = LCManager()
+    public static var shared: LCManager? {
+        guard #available(iOS 14.0, *) else {
+            return nil
+        }
+        
+        return LCManager()
+    }
     
     /// Set the font size. The font can be set to a minimum value of 5.0 and a maximum value of 20.0. The default value is 7.5.
     public var fontSize: CGFloat = 7.5 {
