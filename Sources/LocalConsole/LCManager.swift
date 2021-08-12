@@ -10,8 +10,10 @@
 import UIKit
 import SwiftUI
 
+@available(iOS 14.0, *)
 var GLOBAL_BORDER_TRACKERS: [BorderManager] = []
 
+@available(iOS 14.0, *)
 @available(iOSApplicationExtension, unavailable)
 public class LCManager: NSObject, UIGestureRecognizerDelegate {
     
@@ -743,6 +745,7 @@ public class UITapStartEndGestureRecognizer: UITapGestureRecognizer {
 }
 
 // MARK: Fun hacks!
+@available(iOS 14.0, *)
 extension UIView {
     /// Swizzle UIView to use custom frame system when needed.
     static func swizzleDebugBehaviour_UNTRACKABLE_TOGGLE() {

@@ -8,6 +8,7 @@
 import UIKit
 
 /// This class handles enabling and disabling debug borders on a specified view.
+@available(iOS 14.0, *)
 class BorderManager {
     weak var layer: CALayer?
     
