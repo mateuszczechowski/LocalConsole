@@ -13,17 +13,10 @@ import SwiftUI
 @available(iOS 14.0, *)
 var GLOBAL_BORDER_TRACKERS: [BorderManager] = []
 
-@available(iOS 14.0, *)
 @available(iOSApplicationExtension, unavailable)
 public class LCManager: NSObject, UIGestureRecognizerDelegate {
     
-    public static var shared: LCManager? {
-        guard #available(iOS 14.0, *) else {
-            return nil
-        }
-        
-        return LCManager()
-    }
+    public static let shared = LCManager()
     
     /// Set the font size. The font can be set to a minimum value of 5.0 and a maximum value of 20.0. The default value is 7.5.
     public var fontSize: CGFloat = 7.5 {
@@ -31,7 +24,11 @@ public class LCManager: NSObject, UIGestureRecognizerDelegate {
             guard fontSize >= 4 else { fontSize = 4; return }
             guard fontSize <= 20 else { fontSize = 20; return }
             
-            setAttributedText(consoleTextView.text)
+            if #available(iOS 14.0, *) {
+                setAttributedText(consoleTextView.text)
+            } else {
+                // WILL NOT WORK FOR iOS LOWER THAN 14.0
+            }
         }
     }
     
@@ -47,7 +44,11 @@ public class LCManager: NSObject, UIGestureRecognizerDelegate {
                     
                     // Ensure the console doesn't get caught into any external animation blocks.
                     UIView.performWithoutAnimation {
-                        self.commitTextChanges(requestMenuUpdate: oldValue == "" || (oldValue != "" && self.currentText == ""))
+                        if #available(iOS 14.0, *) {
+                            self.commitTextChanges(requestMenuUpdate: oldValue == "" || (oldValue != "" && self.currentText == ""))
+                        } else {
+                            // WILL NOT WORK FOR iOS LOWER THAN 14.0
+                        }
                     }
                 }
             }
@@ -57,6 +58,7 @@ public class LCManager: NSObject, UIGestureRecognizerDelegate {
     let defaultConsoleSize = CGSize(width: 228, height: 142)
     
     /// The fixed size of the console view.
+    @available(iOS 14.0, *)
     lazy var consoleSize = defaultConsoleSize {
         didSet {
             consoleView.frame.size = consoleSize
@@ -109,10 +111,12 @@ public class LCManager: NSObject, UIGestureRecognizerDelegate {
     /// Feedback generator for the long press action.
     let feedbackGenerator = UISelectionFeedbackGenerator()
     
+    @available(iOS 14.0, *)
     lazy var panRecognizer = UIPanGestureRecognizer(target: self, action: #selector(consolePiPPanner(recognizer:)))
     lazy var longPressRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(longPressAction(recognizer:)))
     
     /// Gesture endpoints. Each point represents a corner of the screen. TODO: Handle screen rotation.
+    @available(iOS 14.0, *)
     var possibleEndpoints: [CGPoint] {
         if consoleSize.width < UIScreen.portraitSize.width - 112 {
             return [CGPoint(x: consoleSize.width / 2 + 12,
@@ -133,6 +137,7 @@ public class LCManager: NSObject, UIGestureRecognizerDelegate {
     
     lazy var initialViewLocation: CGPoint = .zero
     
+    @available(iOS 14.0, *)
     func configureConsole() {
         consoleSize = CGSize(width: UserDefaults.standard.object(forKey: "LocalConsole_Width") as? CGFloat ?? consoleSize.width,
                              height: UserDefaults.standard.object(forKey: "LocalConsole_Height") as? CGFloat ?? consoleSize.height)
@@ -222,10 +227,12 @@ public class LCManager: NSObject, UIGestureRecognizerDelegate {
     }
     
     /// Adds a LocalConsole window to the app's main scene.
+    @available(iOS 14.0, *)
     func configureWindow() {
         var windowSceneFound = false
         
         // Configure console window.
+        @available(iOS 14.0, *)
         func fetchWindowScene() {
             let windowScene = UIApplication.shared
                 .connectedScenes
@@ -277,12 +284,20 @@ public class LCManager: NSObject, UIGestureRecognizerDelegate {
             if isVisible {
                 
                 if !isConsoleConfigured {
-                    configureWindow()
-                    configureConsole()
+                    if #available(iOS 14.0, *) {
+                        configureWindow()
+                        configureConsole()
+                    } else {
+                        // WILL NOT WORK FOR iOS LOWER THAN 14.0
+                    }
                     isConsoleConfigured = true
                 }
                 
-                commitTextChanges(requestMenuUpdate: true)
+                if #available(iOS 14.0, *) {
+                    commitTextChanges(requestMenuUpdate: true)
+                } else {
+                    // WILL NOT WORK FOR iOS LOWER THAN 14.0
+                }
                 
                 consoleView.transform = .init(scaleX: 0.9, y: 0.9)
                 UIViewPropertyAnimator(duration: 0.5, dampingRatio: 0.6) { [self] in
@@ -338,13 +353,16 @@ public class LCManager: NSObject, UIGestureRecognizerDelegate {
     // MARK: Handle keyboard show/hide.
     private var keyboardHeight: CGFloat? = nil {
         didSet {
-            
-            if consoleView.center != possibleEndpoints[0] && consoleView.center != possibleEndpoints[1] {
-                let nearestTargetPosition = nearestTargetTo(consoleView.center, possibleTargets: possibleEndpoints.suffix(2))
-                
-                UIViewPropertyAnimator(duration: 0.55, dampingRatio: 1) {
-                    self.consoleView.center = nearestTargetPosition
-                }.startAnimation()
+            if #available(iOS 14.0, *) {
+                if consoleView.center != possibleEndpoints[0] && consoleView.center != possibleEndpoints[1] {
+                    let nearestTargetPosition = nearestTargetTo(consoleView.center, possibleTargets: possibleEndpoints.suffix(2))
+                    
+                    UIViewPropertyAnimator(duration: 0.55, dampingRatio: 1) {
+                        self.consoleView.center = nearestTargetPosition
+                    }.startAnimation()
+                }
+            } else {
+                // WILL NOT WORK FOR iOS LOWER THAN 14.0
             }
         }
     }
@@ -363,13 +381,21 @@ public class LCManager: NSObject, UIGestureRecognizerDelegate {
     private var debugBordersEnabled = false {
         didSet {
             
-            UIView.swizzleDebugBehaviour_UNTRACKABLE_TOGGLE()
+            if #available(iOS 14.0, *) {
+                UIView.swizzleDebugBehaviour_UNTRACKABLE_TOGGLE()
+            } else {
+                // WILL NOT WORK FOR iOS LOWER THAN 14.0
+            }
             
             guard debugBordersEnabled else {
-                GLOBAL_BORDER_TRACKERS.forEach {
-                    $0.deactivate()
+                if #available(iOS 14.0, *) {
+                    GLOBAL_BORDER_TRACKERS.forEach {
+                        $0.deactivate()
+                        GLOBAL_BORDER_TRACKERS = []
+                    }
+                } else {
+                    // WILL NOT WORK FOR iOS LOWER THAN 14.0
                 }
-                GLOBAL_BORDER_TRACKERS = []
                 return
             }
             
@@ -383,9 +409,13 @@ public class LCManager: NSObject, UIGestureRecognizerDelegate {
                 allViews.append(contentsOf: subviewsRecursive(in: window))
             }
             allViews.forEach {
-                let tracker = BorderManager(view: $0)
-                GLOBAL_BORDER_TRACKERS.append(tracker)
-                tracker.activate()
+                if #available(iOS 14.0, *) {
+                    let tracker = BorderManager(view: $0)
+                    GLOBAL_BORDER_TRACKERS.append(tracker)
+                    tracker.activate()
+                } else {
+                    // WILL NOT WORK FOR iOS LOWER THAN 14.0
+                }
             }
         }
     }
@@ -468,6 +498,7 @@ public class LCManager: NSObject, UIGestureRecognizerDelegate {
         scrollLocked.toggle()
     }
     
+    @available(iOS 14.0, *)
     func commitTextChanges(requestMenuUpdate menuUpdateRequested: Bool) {
         
         if consoleTextView.contentOffset.y > consoleTextView.contentSize.height - consoleTextView.bounds.size.height - 20
@@ -487,6 +518,7 @@ public class LCManager: NSObject, UIGestureRecognizerDelegate {
         }
     }
     
+    @available(iOS 14.0, *)
     func setAttributedText(_ string: String) {
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.headIndent = 7
@@ -500,6 +532,7 @@ public class LCManager: NSObject, UIGestureRecognizerDelegate {
         consoleTextView.attributedText = NSAttributedString(string: string, attributes: attributes)
     }
     
+    @available(iOS 14.0, *)
     func makeMenu() -> UIMenu {
         
         let copy = UIAction(title: "Copy",
@@ -625,6 +658,7 @@ public class LCManager: NSObject, UIGestureRecognizerDelegate {
         }
     }
     
+    @available(iOS 14.0, *)
     @objc func consolePiPPanner(recognizer: UIPanGestureRecognizer) {
         
         if recognizer.state == .began {
